@@ -1,0 +1,71 @@
+parameter (or (string %removeEntry) (pair %setCID (string %key) (string %newCID)));
+storage   (pair (map %keyToCID string string) (address %owner));
+code
+  {
+    DUP;        # pair @parameter @storage : pair @parameter @storage
+    CDR;        # @storage : pair @parameter @storage
+    SWAP;       # pair @parameter @storage : @storage
+    CAR;        # @parameter : @storage
+    IF_LEFT
+      {
+        # == removeEntry ==
+        # if self.data.owner == sp.sender: # @parameter%removeEntry : @storage
+        SENDER;     # address : @parameter%removeEntry : @storage
+        DIG 2;      # @storage : address : @parameter%removeEntry
+        DUP;        # @storage : @storage : address : @parameter%removeEntry
+        DUG 3;      # @storage : address : @parameter%removeEntry : @storage
+        CDR;        # address : address : @parameter%removeEntry : @storage
+        COMPARE;    # int : @parameter%removeEntry : @storage
+        EQ;         # bool : @parameter%removeEntry : @storage
+        IF
+          {
+            SWAP;       # @storage : @parameter%removeEntry
+            # del self.data.keyToCID[sp.set_type_expr(params.key, sp.TString)] # @storage : @parameter%removeEntry
+            DUP;        # @storage : @storage : @parameter%removeEntry
+            CDR;        # address : @storage : @parameter%removeEntry
+            SWAP;       # @storage : address : @parameter%removeEntry
+            CAR;        # map string string : address : @parameter%removeEntry
+            NONE string; # option string : map string string : address : @parameter%removeEntry
+            DIG 3;      # @parameter%removeEntry : option string : map string string : address
+            UPDATE;     # map string string : address
+            PAIR;       # pair (map string string) address
+          }
+          {
+            DROP;       # @storage
+          }; # pair (map string string) address
+      }
+      {
+        # == setCID ==
+        # if self.data.owner == sp.sender: # @parameter%setCID : @storage
+        SENDER;     # address : @parameter%setCID : @storage
+        DIG 2;      # @storage : address : @parameter%setCID
+        DUP;        # @storage : @storage : address : @parameter%setCID
+        DUG 3;      # @storage : address : @parameter%setCID : @storage
+        CDR;        # address : address : @parameter%setCID : @storage
+        COMPARE;    # int : @parameter%setCID : @storage
+        EQ;         # bool : @parameter%setCID : @storage
+        IF
+          {
+            SWAP;       # @storage : @parameter%setCID
+            # self.data.keyToCID[sp.set_type_expr(params.key, sp.TString)] = sp.set_type_expr(params.newCID, sp.TString) # @storage : @parameter%setCID
+            DUP;        # @storage : @storage : @parameter%setCID
+            CDR;        # address : @storage : @parameter%setCID
+            SWAP;       # @storage : address : @parameter%setCID
+            CAR;        # map string string : address : @parameter%setCID
+            DIG 2;      # @parameter%setCID : map string string : address
+            DUP;        # @parameter%setCID : @parameter%setCID : map string string : address
+            CAR;        # string : @parameter%setCID : map string string : address
+            SWAP;       # @parameter%setCID : string : map string string : address
+            CDR;        # string : string : map string string : address
+            SOME;       # option string : string : map string string : address
+            SWAP;       # string : option string : map string string : address
+            UPDATE;     # map string string : address
+            PAIR;       # pair (map string string) address
+          }
+          {
+            DROP;       # @storage
+          }; # pair (map string string) address
+      }; # pair (map string string) address
+    NIL operation; # list operation : pair (map string string) address
+    PAIR;       # pair (list operation) (pair (map string string) address)
+  };
